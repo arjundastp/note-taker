@@ -53,3 +53,11 @@ export async function putImage(id: string, bytes: Uint8Array) {
 }
 
 export const imageUrl = (id: string) => `${baseUrl}/api/notes/${id}/image`;
+
+/** Fetch the sketch PNG bytes (auth + refresh handled). null when none yet. */
+export async function getImageBytes(id: string): Promise<Uint8Array | null> {
+  const res = await request(`/api/notes/${id}/image`);
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`Image load failed (${res.status})`);
+  return new Uint8Array(await res.arrayBuffer());
+}
