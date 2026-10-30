@@ -4,7 +4,7 @@ import { Router } from "express";
 
 export const pagesRouter = Router();
 
-const CONTACT_EMAIL = "arjun.das@fantacode.com"; // shown on the privacy policy
+const CONTACT_EMAIL = "support@deun.in"; // shown on the privacy policy
 const UPDATED = "October 30, 2026";
 
 const shell = (title: string, body: string) => `<!doctype html>
