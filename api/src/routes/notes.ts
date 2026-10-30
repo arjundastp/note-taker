@@ -1,4 +1,4 @@
-import { Router } from "express";
+import express, { Router } from "express";
 import { prisma } from "../db.js";
 import {
   createNoteSchema,
@@ -84,6 +84,47 @@ notesRouter.patch(
       data: { isPinned },
     });
     res.json(note);
+  }),
+);
+
+// Sketch image: raw PNG bytes in, same bytes out. Raw parser only here.
+const rawPng = express.raw({ type: "image/png", limit: "4mb" });
+
+notesRouter.put(
+  "/:id/image",
+  rawPng,
+  asyncRoute(async (req, res) => {
+    if (!req.is("image/png") || !Buffer.isBuffer(req.body) || req.body.length === 0) {
+      throw new HttpError(415, "Send a PNG image", "BAD_IMAGE");
+    }
+    await ownedNote(userIdOf(req), req.params.id);
+    // Prisma's Bytes field types as Uint8Array<ArrayBuffer>; normalize from Buffer.
+    const bytes = new Uint8Array(req.body);
+    await prisma.$transaction([
+      prisma.noteImage.upsert({
+        where: { noteId: req.params.id },
+        create: { noteId: req.params.id, bytes, mimeType: "image/png" },
+        update: { bytes },
+      }),
+      prisma.note.update({
+        where: { id: req.params.id },
+        data: { kind: "sketch" }, // also bumps updatedAt
+      }),
+    ]);
+    res.json({ ok: true });
+  }),
+);
+
+notesRouter.get(
+  "/:id/image",
+  asyncRoute(async (req, res) => {
+    await ownedNote(userIdOf(req), req.params.id);
+    const img = await prisma.noteImage.findUnique({
+      where: { noteId: req.params.id },
+    });
+    if (!img) throw new HttpError(404, "No image");
+    res.setHeader("Content-Type", img.mimeType);
+    res.send(Buffer.from(img.bytes));
   }),
 );
 
