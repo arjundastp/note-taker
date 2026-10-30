@@ -1,7 +1,13 @@
 import cors from "cors";
-import express from "express";
-import helmet from "helmet";
+import express, { type RequestHandler } from "express";
+import * as helmetNs from "helmet";
 import { databaseConfigured, env } from "./env.js";
+
+// helmet 8 ships no `types` export condition, so some resolvers (e.g. Vercel's
+// function bundler) type its default import as a non-callable namespace. Resolve
+// the callable from either shape, safe at both compile and runtime.
+const helmet = ((helmetNs as { default?: unknown }).default ??
+  helmetNs) as () => RequestHandler;
 import { pingDatabase } from "./db.js";
 import { errorHandler, notFound } from "./middleware/error.js";
 import { apiLimiter } from "./middleware/rateLimit.js";
