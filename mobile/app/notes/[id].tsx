@@ -18,6 +18,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getNote, updateNote, type Note } from "../../src/api/notes";
 import { ShareSheet } from "../../src/components/ShareSheet";
+import { trySave } from "../../src/lib/autosave";
 import { formatNoteDate } from "../../src/lib/date";
 import { theme } from "../../src/lib/theme";
 
@@ -27,6 +28,7 @@ export default function TextEditor() {
   const insets = useSafeAreaInsets();
   const [note, setNote] = useState<Note | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
+  const [saveFailed, setSaveFailed] = useState(false);
 
   const editor = useEditorBridge({ autofocus: false, avoidIosKeyboard: true });
   const content = useEditorContent(editor, { type: "html" });
@@ -41,23 +43,28 @@ export default function TextEditor() {
     });
   }, [id]);
 
-  // Debounced autosave.
+  // Debounced autosave. On a transient failure we leave lastSaved untouched so
+  // the next change retries — never silently lose an edit (a stated anti-goal).
   useEffect(() => {
     if (content == null || note == null) return;
     if (content === lastSaved.current) return;
-    const t = setTimeout(() => {
-      lastSaved.current = content;
-      updateNote(id, content).catch(() => {});
-    }, 800);
+    const t = setTimeout(() => void persist(content), 800);
     return () => clearTimeout(t);
   }, [content, note, id]);
 
+  async function persist(html: string) {
+    const outcome = await trySave(() => updateNote(id, html));
+    if (outcome === "saved" || outcome === "session-expired") {
+      lastSaved.current = html;
+      setSaveFailed(false);
+    } else {
+      setSaveFailed(true); // keep lastSaved stale → retried on next change / back
+    }
+  }
+
   async function saveNow() {
     const html = await editor.getHTML();
-    if (html !== lastSaved.current) {
-      lastSaved.current = html;
-      await updateNote(id, html).catch(() => {});
-    }
+    if (html !== lastSaved.current) await persist(html);
   }
 
   if (!note) {
@@ -86,8 +93,10 @@ export default function TextEditor() {
         </Pressable>
       </View>
 
-      <Text style={styles.date}>
-        {formatNoteDate(note.createdAt)} · edited {formatNoteDate(note.updatedAt)}
+      <Text style={[styles.date, saveFailed && styles.dateError]}>
+        {saveFailed
+          ? "Couldn't save — will retry"
+          : `${formatNoteDate(note.createdAt)} · edited ${formatNoteDate(note.updatedAt)}`}
       </Text>
 
       <RichText editor={editor} style={styles.editor} />
@@ -123,5 +132,6 @@ const styles = StyleSheet.create({
   back: { color: theme.accent, fontSize: 17 },
   share: { color: theme.accent, fontSize: 17 },
   date: { color: theme.sub, fontSize: 12, textAlign: "center", paddingBottom: 6 },
+  dateError: { color: theme.danger },
   editor: { flex: 1, backgroundColor: theme.paper },
 });

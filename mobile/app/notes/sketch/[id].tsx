@@ -1,7 +1,7 @@
 import { Skia, type SkImage } from "@shopify/react-native-skia";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getImageBytes, getNote, putImage, type Note } from "../../../src/api/notes";
 import {
@@ -9,6 +9,7 @@ import {
   type SketchHandle,
 } from "../../../src/components/SketchCanvas";
 import { ShareSheet } from "../../../src/components/ShareSheet";
+import { trySave } from "../../../src/lib/autosave";
 import { theme } from "../../../src/lib/theme";
 
 export default function SketchEditor() {
@@ -21,9 +22,12 @@ export default function SketchEditor() {
   const [ready, setReady] = useState(false);
   const [shareNote, setShareNote] = useState<Note | null>(null);
 
-  async function savePng() {
+  // Returns false on a transient failure so the caller can warn instead of
+  // silently losing the drawing (a stated anti-goal).
+  async function savePng(): Promise<boolean> {
     const png = canvas.current?.snapshotPng();
-    if (png && png.length > 0) await putImage(id, png).catch(() => {});
+    if (!png || png.length === 0) return true; // nothing to save
+    return (await trySave(() => putImage(id, png))) !== "failed";
   }
 
   useEffect(() => {
@@ -38,12 +42,19 @@ export default function SketchEditor() {
   }, [id]);
 
   async function saveAndBack() {
-    await savePng();
+    const ok = await savePng();
+    if (!ok) {
+      Alert.alert("Couldn't save drawing", "Check your connection and try again.");
+      return;
+    }
     router.back();
   }
 
   async function saveAndShare() {
-    await savePng();
+    if (!(await savePng())) {
+      Alert.alert("Couldn't save drawing", "Check your connection and try again.");
+      return;
+    }
     setShareNote(await getNote(id).catch(() => null));
   }
 
