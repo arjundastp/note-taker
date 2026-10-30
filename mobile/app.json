@@ -33,7 +33,18 @@
           "image": "./assets/splash-icon.png",
           "backgroundColor": "#FFFDF4",
           "imageWidth": 220,
-          "dark": { "backgroundColor": "#1C1C1E" }
+          "dark": {
+            "backgroundColor": "#1C1C1E"
+          }
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableProguardInReleaseBuilds": false,
+            "enableShrinkResourcesInReleaseBuilds": false
+          }
         }
       ]
     ],
