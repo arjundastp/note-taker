@@ -5,6 +5,7 @@ import { databaseConfigured, env } from "./env.js";
 import { pingDatabase } from "./db.js";
 import { errorHandler, notFound } from "./middleware/error.js";
 import { apiLimiter } from "./middleware/rateLimit.js";
+import { authRouter } from "./routes/auth.js";
 
 export const app = express();
 
@@ -42,7 +43,8 @@ app.get("/readyz", async (_req, res) => {
 app.use(express.json({ limit: "1mb" }));
 
 app.use("/api", apiLimiter);
-// Routers mounted in later tasks: /api/auth, /api/notes
+app.use("/api/auth", authRouter);
+// Router mounted in a later task: /api/notes
 
 app.use(notFound);
 app.use(errorHandler);
