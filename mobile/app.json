@@ -26,7 +26,16 @@
       "expo-router",
       "expo-secure-store",
       "expo-sharing",
-      "./plugins/withArm64Only.js"
+      "./plugins/withArm64Only.js",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "backgroundColor": "#FFFDF4",
+          "imageWidth": 220,
+          "dark": { "backgroundColor": "#1C1C1E" }
+        }
+      ]
     ],
     "extra": {
       "apiUrl": "https://note-taker-nu-lemon.vercel.app",
