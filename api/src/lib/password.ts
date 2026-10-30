@@ -1,11 +1,12 @@
-import { hash, verify } from "@node-rs/argon2";
+import bcrypt from "bcryptjs";
 
-// argon2id with OWASP's recommended floor. @node-rs ships prebuilt binaries,
-// so there is no node-gyp toolchain to break on a deploy.
-const OPTIONS = { memoryCost: 19456, timeCost: 2, parallelism: 1 } as const;
+// bcrypt (pure JS) rather than a native argon2 binary, so it runs anywhere —
+// notably on serverless (Vercel), where bundling a platform .node binary is
+// unreliable. 12 rounds is the common cost floor.
+const ROUNDS = 12;
 
 export function hashPassword(plain: string): Promise<string> {
-  return hash(plain, OPTIONS);
+  return bcrypt.hash(plain, ROUNDS);
 }
 
 export async function verifyPassword(
@@ -13,16 +14,16 @@ export async function verifyPassword(
   plain: string,
 ): Promise<boolean> {
   try {
-    return await verify(digest, plain, OPTIONS);
+    return await bcrypt.compare(plain, digest);
   } catch {
     return false; // malformed digest — a failed login, never a 500
   }
 }
 
 /**
- * A real argon2 verification against a throwaway digest, used when the email
- * does not exist, so "unknown email" and "wrong password" take the same time
- * and never reveal which addresses are registered.
+ * A real bcrypt comparison against a throwaway digest, used when the email does
+ * not exist, so "unknown email" and "wrong password" take similar time and
+ * never reveal which addresses are registered.
  */
 const DECOY = hashPassword("decoy-password-never-matches");
 export async function burnTimingBudget(plain: string): Promise<void> {
