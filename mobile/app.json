@@ -25,9 +25,22 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": ["expo-router", "expo-secure-store", "expo-sharing"],
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-sharing"
+    ],
     "extra": {
-      "apiUrl": "https://note-taker-nu-lemon.vercel.app"
-    }
+      "apiUrl": "https://note-taker-nu-lemon.vercel.app",
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "21e61860-da29-4dc8-ae0a-4348c460dba2"
+      }
+    },
+    "owner": "arjundastp3333"
   }
 }
