@@ -140,3 +140,14 @@ authRouter.get(
     res.json({ user: { ...publicUser(user), createdAt: user.createdAt } });
   }),
 );
+
+// Delete the signed-in account. Cascades to the user's notes, images and
+// sessions (schema onDelete: Cascade). A user can only delete themselves.
+authRouter.delete(
+  "/me",
+  requireAuth,
+  asyncRoute(async (req, res) => {
+    await prisma.user.delete({ where: { id: userIdOf(req) } });
+    res.status(204).end();
+  }),
+);

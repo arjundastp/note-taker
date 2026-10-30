@@ -61,6 +61,29 @@ describe("auth", () => {
     expect(reuse.status).toBe(401);
   });
 
+  it("deletes the signed-in account and its data", async () => {
+    const reg = await request(app)
+      .post("/api/auth/register")
+      .send({ email: "del@example.com", password: "password123" });
+    const token = reg.body.accessToken;
+    // create a note so cascade is exercised
+    await request(app)
+      .post("/api/notes")
+      .set(bearer(token))
+      .send({ kind: "text", bodyHtml: "bye" });
+
+    const del = await request(app).delete("/api/auth/me").set(bearer(token));
+    expect(del.status).toBe(204);
+
+    // account gone: /me now 401, and re-registering the email works
+    const me = await request(app).get("/api/auth/me").set(bearer(token));
+    expect(me.status).toBe(401);
+    const again = await request(app)
+      .post("/api/auth/register")
+      .send({ email: "del@example.com", password: "password123" });
+    expect(again.status).toBe(201);
+  });
+
   it("serves /me with a token and refuses without one", async () => {
     const reg = await request(app)
       .post("/api/auth/register")
