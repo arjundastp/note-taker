@@ -9,10 +9,10 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.notesapp.app"
+      "bundleIdentifier": "deunapp.in"
     },
     "android": {
-      "package": "com.notesapp.app",
+      "package": "deunapp.in",
       "adaptiveIcon": {
         "backgroundColor": "#E8B000",
         "foregroundImage": "./assets/android-icon-foreground.png"
