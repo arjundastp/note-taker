@@ -7,7 +7,6 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.notesapp.app"
@@ -28,7 +27,8 @@
     "plugins": [
       "expo-router",
       "expo-secure-store",
-      "expo-sharing"
+      "expo-sharing",
+      "./plugins/withArm64Only.js"
     ],
     "extra": {
       "apiUrl": "https://note-taker-nu-lemon.vercel.app",
