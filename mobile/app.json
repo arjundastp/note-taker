@@ -27,7 +27,7 @@
     },
     "plugins": ["expo-router", "expo-secure-store", "expo-sharing"],
     "extra": {
-      "apiUrl": "http://localhost:3000"
+      "apiUrl": "https://note-taker-nu-lemon.vercel.app"
     }
   }
 }
