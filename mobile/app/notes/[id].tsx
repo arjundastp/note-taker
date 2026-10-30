@@ -17,6 +17,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getNote, updateNote, type Note } from "../../src/api/notes";
+import { ShareSheet } from "../../src/components/ShareSheet";
 import { formatNoteDate } from "../../src/lib/date";
 import { theme } from "../../src/lib/theme";
 
@@ -25,6 +26,7 @@ export default function TextEditor() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [note, setNote] = useState<Note | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
 
   const editor = useEditorBridge({ autofocus: false, avoidIosKeyboard: true });
   const content = useEditorContent(editor, { type: "html" });
@@ -79,6 +81,9 @@ export default function TextEditor() {
         >
           <Text style={styles.back}>‹ Notes</Text>
         </Pressable>
+        <Pressable onPress={async () => { await saveNow(); setShareOpen(true); }} hitSlop={10}>
+          <Text style={styles.share}>Share</Text>
+        </Pressable>
       </View>
 
       <Text style={styles.date}>
@@ -93,6 +98,14 @@ export default function TextEditor() {
       >
         <Toolbar editor={editor} />
       </KeyboardAvoidingView>
+
+      {shareOpen && (
+        <ShareSheet
+          note={note}
+          getHtml={() => editor.getHTML()}
+          onClose={() => setShareOpen(false)}
+        />
+      )}
     </View>
   );
 }

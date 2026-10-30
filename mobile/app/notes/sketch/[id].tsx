@@ -3,11 +3,12 @@ import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { getImageBytes, putImage } from "../../../src/api/notes";
+import { getImageBytes, getNote, putImage, type Note } from "../../../src/api/notes";
 import {
   SketchCanvas,
   type SketchHandle,
 } from "../../../src/components/SketchCanvas";
+import { ShareSheet } from "../../../src/components/ShareSheet";
 import { theme } from "../../../src/lib/theme";
 
 export default function SketchEditor() {
@@ -18,6 +19,12 @@ export default function SketchEditor() {
   const [tool, setTool] = useState<"pen" | "eraser">("pen");
   const [background, setBackground] = useState<SkImage | null>(null);
   const [ready, setReady] = useState(false);
+  const [shareNote, setShareNote] = useState<Note | null>(null);
+
+  async function savePng() {
+    const png = canvas.current?.snapshotPng();
+    if (png && png.length > 0) await putImage(id, png).catch(() => {});
+  }
 
   useEffect(() => {
     getImageBytes(id)
@@ -31,11 +38,13 @@ export default function SketchEditor() {
   }, [id]);
 
   async function saveAndBack() {
-    const png = canvas.current?.snapshotPng();
-    if (png && png.length > 0) {
-      await putImage(id, png).catch(() => {});
-    }
+    await savePng();
     router.back();
+  }
+
+  async function saveAndShare() {
+    await savePng();
+    setShareNote(await getNote(id).catch(() => null));
   }
 
   return (
@@ -50,11 +59,16 @@ export default function SketchEditor() {
           <Tool label="🩹" active={tool === "eraser"} onPress={() => setTool("eraser")} />
           <Tool label="↶" onPress={() => canvas.current?.undo()} />
           <Tool label="🗑" onPress={() => canvas.current?.clear()} />
+          <Tool label="⤴" onPress={saveAndShare} />
         </View>
       </View>
 
       {ready && (
         <SketchCanvas ref={canvas} tool={tool} background={background} />
+      )}
+
+      {shareNote && (
+        <ShareSheet note={shareNote} onClose={() => setShareNote(null)} />
       )}
     </View>
   );
