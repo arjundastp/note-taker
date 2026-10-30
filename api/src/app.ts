@@ -6,6 +6,7 @@ import { pingDatabase } from "./db.js";
 import { errorHandler, notFound } from "./middleware/error.js";
 import { apiLimiter } from "./middleware/rateLimit.js";
 import { authRouter } from "./routes/auth.js";
+import { notesRouter } from "./routes/notes.js";
 
 export const app = express();
 
@@ -44,7 +45,7 @@ app.use(express.json({ limit: "1mb" }));
 
 app.use("/api", apiLimiter);
 app.use("/api/auth", authRouter);
-// Router mounted in a later task: /api/notes
+app.use("/api/notes", notesRouter);
 
 app.use(notFound);
 app.use(errorHandler);
