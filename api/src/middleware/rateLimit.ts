@@ -1,5 +1,11 @@
-import type { RequestHandler } from "express";
-import rateLimit from "express-rate-limit";
+import type { Request, RequestHandler } from "express";
+import * as rateLimitNs from "express-rate-limit";
+
+// express-rate-limit ships no `types` export condition, so some resolvers (e.g.
+// Vercel's function bundler) type its default import as a non-callable namespace.
+// Resolve the callable from either shape, safe at compile and runtime.
+const rateLimit = ((rateLimitNs as { default?: unknown }).default ??
+  rateLimitNs) as (options: Record<string, unknown>) => RequestHandler;
 
 // The limiter keeps an in-memory count that outlives per-test DB resets, so it
 // would trip across a suite. Off in tests; real in dev/prod.
@@ -18,7 +24,7 @@ export const authLimiter: RequestHandler = inTest
   limit: 5,
   standardHeaders: "draft-7",
   legacyHeaders: false,
-  keyGenerator: (req) => {
+  keyGenerator: (req: Request) => {
     const email =
       typeof req.body?.email === "string" ? req.body.email : "unknown";
     return `${req.ip}:${email}`;
