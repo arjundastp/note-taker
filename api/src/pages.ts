@@ -28,7 +28,52 @@ pagesRouter.get("/", (_req, res) => {
       `<h1>Notes</h1>
        <p>A simple note-taking app — rich-text notes and ink sketches, pinning,
        and sharing as text, Markdown, or PDF.</p>
-       <p class="muted"><a href="/privacy">Privacy Policy</a></p>`,
+       <p class="muted"><a href="/privacy">Privacy Policy</a> · <a href="/delete-account">Delete your account</a></p>`,
+    ),
+  );
+});
+
+pagesRouter.get("/delete-account", (_req, res) => {
+  res.type("html").send(
+    shell(
+      "Delete your account — Notes",
+      `<h1>Delete your account</h1>
+       <p>Deleting your account permanently removes your account and
+       <strong>all of your notes and drawings</strong>. This cannot be undone.</p>
+       <p>You can also do this inside the app: open it, tap <em>Sign out</em> area /
+       account, and choose <em>Delete account</em>. Or use the form below.</p>
+
+       <form id="f" style="display:flex;flex-direction:column;gap:12px;max-width:360px;margin-top:20px">
+         <input id="email" type="email" placeholder="Email" required
+           style="padding:12px;border:1px solid #8884;border-radius:10px;font-size:16px">
+         <input id="password" type="password" placeholder="Password" required
+           style="padding:12px;border:1px solid #8884;border-radius:10px;font-size:16px">
+         <button type="submit"
+           style="padding:14px;border:0;border-radius:10px;background:#d33;color:#fff;font-size:16px;font-weight:600">
+           Delete my account
+         </button>
+       </form>
+       <p id="msg" class="muted" style="margin-top:14px"></p>
+
+       <script>
+       const f=document.getElementById('f'),msg=document.getElementById('msg');
+       f.addEventListener('submit',async(e)=>{
+         e.preventDefault();
+         if(!confirm('Permanently delete your account and all notes? This cannot be undone.'))return;
+         msg.textContent='Deleting…';
+         try{
+           const email=document.getElementById('email').value.trim();
+           const password=document.getElementById('password').value;
+           const r=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})});
+           if(!r.ok){const b=await r.json().catch(()=>({}));msg.textContent=b.error||'Wrong email or password.';return;}
+           const {accessToken}=await r.json();
+           const d=await fetch('/api/auth/me',{method:'DELETE',headers:{'Authorization':'Bearer '+accessToken}});
+           msg.textContent=d.status===204?'Your account and all data have been deleted.':'Could not delete. Please try again.';
+           if(d.status===204)f.style.display='none';
+         }catch(err){msg.textContent='Something went wrong. Please try again.';}
+       });
+       </script>
+       <p class="muted" style="margin-top:20px"><a href="/privacy">Privacy Policy</a></p>`,
     ),
   );
 });
@@ -66,8 +111,9 @@ pagesRouter.get("/privacy", (_req, res) => {
        to comply with the law.</p>
 
        <h2>Data retention and deletion</h2>
-       <p>You can delete your account at any time from within the app. Deleting your
-       account permanently removes your account and all of your notes and drawings.</p>
+       <p>You can delete your account at any time from within the app, or at
+       <a href="/delete-account">${""}/delete-account</a>. Deleting your account
+       permanently removes your account and all of your notes and drawings.</p>
 
        <h2>Security</h2>
        <p>Passwords are hashed with bcrypt and all traffic is encrypted over HTTPS.
