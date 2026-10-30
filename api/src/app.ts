@@ -13,6 +13,7 @@ import { errorHandler, notFound } from "./middleware/error.js";
 import { apiLimiter } from "./middleware/rateLimit.js";
 import { authRouter } from "./routes/auth.js";
 import { notesRouter } from "./routes/notes.js";
+import { pagesRouter } from "./pages.js";
 
 export const app = express();
 
@@ -52,6 +53,9 @@ app.use(express.json({ limit: "1mb" }));
 app.use("/api", apiLimiter);
 app.use("/api/auth", authRouter);
 app.use("/api/notes", notesRouter);
+
+// Public web pages (landing + privacy policy for Google Play).
+app.use("/", pagesRouter);
 
 app.use(notFound);
 app.use(errorHandler);
